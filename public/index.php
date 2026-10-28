@@ -29,19 +29,6 @@ function fetchParcelGml(): string
     return $gml;
 }
 
-function countParcel(string $gml): int
-{
-    $xml = simplexml_load_string($gml);
-    $xml->registerXPathNamespace(
-        "cp",
-        "http://inspire.ec.europa.eu/schemas/cp/4.0",
-    );
-
-    $parcels = $xml->xpath("//cp:CadastralParcel");
-
-    return count($parcels);
-}
-
 function parseParcels(string $gml): array
 {
     $xml = simplexml_load_string($gml);
@@ -67,6 +54,6 @@ function parseParcels(string $gml): array
 
 match ($path) {
     "/" => print "hello",
-    "/api/parcels" => sendJson(["parse" => parseParcels(fetchParcelGml())]),
+    "/api/parcels" => sendJson(["parcels" => parseParcels(fetchParcelGml())]),
     default => sendJson(["error" => "Not found"], 404),
 };
