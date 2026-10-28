@@ -1,6 +1,10 @@
 .DS_Store
 .idea/
 .vscode/
+/node_modules/
 /vendor/
 /cache/
 *.log
+.prettierrc.json
+package-lock.json
+package.json
