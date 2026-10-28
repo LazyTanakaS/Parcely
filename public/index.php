@@ -63,6 +63,22 @@ function parsePosList(string $posList): array
     );
 }
 
+function parcelRings(SimpleXMLElement $parcel): array
+{
+    $parcel->registerXPathNamespace("gml", "http://www.opengis.net/gml/3.2");
+
+    $outer = $parcel->xpath(".//gml:exterior//gml:posList");
+    $holes = $parcel->xpath(".//gml:interior//gml:posList");
+
+    $rings = [parsePosList((string) $outer[0])];
+
+    foreach ($holes as $hole) {
+        $rings[] = parsePosList((string) $hole[0]);
+    }
+
+    return $rings;
+}
+
 match ($path) {
     "/" => print "hello",
     "/api/parcels" => sendJson(["parcels" => parseParcels(fetchParcelGml())]),
