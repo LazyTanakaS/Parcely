@@ -41,11 +41,18 @@ function parseParcels(string $gml): array
 
     foreach ($xml->xpath("//cp:CadastralParcel") as $parcel) {
         $result[] = [
-            "label" => (string) $parcel->xpath("cp:label")[0],
-            "area" => (int) $parcel->xpath("cp:areaValue")[0],
-            "reference" => (string) $parcel->xpath(
-                "cp:nationalCadastralReference",
-            )[0],
+            "type" => "Feature",
+            "geometry" => [
+                "type" => "Polygon",
+                "coordinates" => parcelRings($parcel),
+            ],
+            "properties" => [
+                "label" => (string) $parcel->xpath("cp:label")[0],
+                "area" => (int) $parcel->xpath("cp:areaValue")[0],
+                "reference" => (string) $parcel->xpath(
+                    "cp:nationalCadastralReference",
+                )[0],
+            ],
         ];
     }
 
@@ -81,6 +88,9 @@ function parcelRings(SimpleXMLElement $parcel): array
 
 match ($path) {
     "/" => print "hello",
-    "/api/parcels" => sendJson(["parcels" => parseParcels(fetchParcelGml())]),
+    "/api/parcels" => sendJson([
+        "type" => "FeatureCollection",
+        "features" => parseParcels(fetchParcelGml()),
+    ]),
     default => sendJson(["error" => "Not found"], 404),
 };
