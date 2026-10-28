@@ -52,6 +52,17 @@ function parseParcels(string $gml): array
     return $result;
 }
 
+function parsePosList(string $posList): array
+{
+    $flat = explode(" ", trim($posList));
+    $pairs = array_chunk($flat, 2);
+
+    return array_map(
+        fn(array $pair) => [(float) $pair[1], (float) $pair[0]],
+        $pairs,
+    );
+}
+
 match ($path) {
     "/" => print "hello",
     "/api/parcels" => sendJson(["parcels" => parseParcels(fetchParcelGml())]),
