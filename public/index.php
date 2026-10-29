@@ -3,6 +3,7 @@
 declare(strict_types=1);
 use App\JsonResponse;
 use App\Bbox;
+use App\CuzkClient;
 
 spl_autoload_register(function (string $class): void {
     $prefix = "App\\";
@@ -78,39 +79,27 @@ function parcelRings(SimpleXMLElement $parcel): array
     return $rings;
 }
 
-function fetchParcelGml(Bbox $bbox): string
-{
-    $url =
-        "https://services.cuzk.gov.cz/wfs/inspire-cp-wfs.asp?" .
-        http_build_query([
-            "service" => "WFS",
-            "version" => "2.0.0",
-            "request" => "GetFeature",
-            "typeNames" => "cp:CadastralParcel",
-            "srsName" => "urn:ogc:def:crs:EPSG::4326",
-            "bbox" => $bbox->toCuzkParam(),
-        ]);
-
-    $gml = file_get_contents($url);
-
-    return $gml;
-}
-
 function handleParcels(): void
 {
     $bbox = Bbox::fromString($_GET["bbox"] ?? null);
 
     if ($bbox === null) {
-        JsonResponse::send(
-            ["error" => "Expected bbox=minLon,minLat,maxLon,maxLat"],
-            400,
-        );
+        JsonResponse::send(["error" => "Expected bbox=..."], 400);
+        return;
+    }
+
+    $client = new CuzkClient();
+
+    try {
+        $gml = $client->fetchParcelGml($bbox);
+    } catch (RuntimeException $e) {
+        JsonResponse::send(["error" => "Cuzk is not available now"], 502);
         return;
     }
 
     JsonResponse::send([
         "type" => "FeatureCollection",
-        "features" => parseParcels(fetchParcelGml($bbox)),
+        "features" => parseParcels($gml),
     ]);
 }
 
