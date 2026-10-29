@@ -1,16 +1,26 @@
 <?php
 
 declare(strict_types=1);
+use App\JsonResponse;
+
+spl_autoload_register(function (string $class): void {
+    $prefix = "App\\";
+
+    if (!str_starts_with($class, $prefix)) {
+        return;
+    }
+
+    $relative = substr($class, strlen($prefix));
+    $file = __DIR__ . "/../src/" . str_replace("\\", "/", $relative) . ".php";
+
+    if (is_file($file)) {
+        require $file;
+    }
+});
+
 const MAX_BBOX_AREA_DEG2 = 0.000101;
 const MAX_BBOX_SIDE_DEG = 0.03;
 $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
-
-function sendJson(array $data, int $status = 200): void
-{
-    http_response_code($status);
-    header("Content-Type: application/json");
-    echo json_encode($data);
-}
 
 function parseParcels(string $gml): array
 {
@@ -130,11 +140,14 @@ function handleParcels(): void
     $bbox = parseBbox($_GET["bbox"] ?? null);
 
     if ($bbox === null) {
-        sendJson(["error" => "Expected bbox=minLon,minLat,maxLon,maxLat"], 400);
+        JsonResponse::send(
+            ["error" => "Expected bbox=minLon,minLat,maxLon,maxLat"],
+            400,
+        );
         return;
     }
 
-    sendJson([
+    JsonResponse::send([
         "type" => "FeatureCollection",
         "features" => parseParcels(fetchParcelGml($bbox)),
     ]);
@@ -143,5 +156,5 @@ function handleParcels(): void
 match ($path) {
     "/" => print "hello",
     "/api/parcels" => handleParcels(),
-    default => sendJson(["error" => "Not found"], 404),
+    default => JsonResponse::send(["error" => "Not found"], 404),
 };
