@@ -1,6 +1,6 @@
 import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import ParcelsLayer from "./ParcelLayer";
+import ParcelLayer from "./ParcelLayer";
 
 export default function ParcelMap() {
   return (
@@ -14,7 +14,7 @@ export default function ParcelMap() {
         attribution="&copy; OpenStreetMap contributors"
         maxZoom={19}
       />
-      <ParcelsLayer />
+      <ParcelLayer />
     </MapContainer>
   );
 }
