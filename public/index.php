@@ -24,10 +24,10 @@ spl_autoload_register(function (string $class): void {
 $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
 
 match ($path) {
-    "/" => print "hello",
-    "/api/parcels" => new ParcelController(
+    "/" => header("Location: /app/"),
+    "/api/parcels" => (new ParcelController(
         new CuzkClient(),
         new GmlParser(),
-    )->index(),
+    ))->index(),
     default => JsonResponse::send(["error" => "Not found"], 404),
 };
