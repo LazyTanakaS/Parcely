@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 use App\JsonResponse;
+use App\Bbox;
 
 spl_autoload_register(function (string $class): void {
     $prefix = "App\\";
@@ -18,8 +19,6 @@ spl_autoload_register(function (string $class): void {
     }
 });
 
-const MAX_BBOX_AREA_DEG2 = 0.000101;
-const MAX_BBOX_SIDE_DEG = 0.03;
 $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
 
 function parseParcels(string $gml): array
@@ -79,45 +78,7 @@ function parcelRings(SimpleXMLElement $parcel): array
     return $rings;
 }
 
-function parseBbox(?string $raw): ?array
-{
-    if ($raw === null) {
-        return null;
-    }
-
-    $parts = explode(",", $raw);
-
-    if (count($parts) !== 4) {
-        return null;
-    }
-
-    foreach ($parts as $part) {
-        if (!is_numeric($part)) {
-            return null;
-        }
-    }
-
-    [$minLon, $minLat, $maxLon, $maxLat] = array_map("floatval", $parts);
-
-    if ($minLon >= $maxLon || $minLat >= $maxLat) {
-        return null;
-    }
-
-    $width = $maxLon - $minLon;
-    $heigh = $maxLat - $minLat;
-
-    if (
-        $width > MAX_BBOX_SIDE_DEG ||
-        $heigh > MAX_BBOX_SIDE_DEG ||
-        $width * $heigh > MAX_BBOX_AREA_DEG2
-    ) {
-        return null;
-    }
-
-    return [$minLat, $minLon, $maxLat, $maxLon];
-}
-
-function fetchParcelGml(array $bbox): string
+function fetchParcelGml(Bbox $bbox): string
 {
     $url =
         "https://services.cuzk.gov.cz/wfs/inspire-cp-wfs.asp?" .
@@ -127,7 +88,7 @@ function fetchParcelGml(array $bbox): string
             "request" => "GetFeature",
             "typeNames" => "cp:CadastralParcel",
             "srsName" => "urn:ogc:def:crs:EPSG::4326",
-            "bbox" => implode(",", $bbox),
+            "bbox" => $bbox->toCuzkParam(),
         ]);
 
     $gml = file_get_contents($url);
@@ -137,7 +98,7 @@ function fetchParcelGml(array $bbox): string
 
 function handleParcels(): void
 {
-    $bbox = parseBbox($_GET["bbox"] ?? null);
+    $bbox = Bbox::fromString($_GET["bbox"] ?? null);
 
     if ($bbox === null) {
         JsonResponse::send(
