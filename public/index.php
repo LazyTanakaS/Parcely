@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-const MAX_BBOX_SIZE_DEG = 0.02;
+const MAX_BBOX_SIZE_DEG = 0.0101;
 $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
 
 function sendJson(array $data, int $status = 200): void
