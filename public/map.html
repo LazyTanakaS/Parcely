@@ -26,6 +26,41 @@
         maxZoom: 19,
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(map);
+
+      const parcelsLayer = L.geoJSON(null).addTo(map);
+
+      let timer;
+
+      async function loadParcels() {
+        if (map.getZoom() < 18) {
+          parcelsLayer.clearLayers();
+          return;
+        }
+
+        const b = map.getBounds();
+        const bbox = [
+          b.getWest(),
+          b.getSouth(),
+          b.getEast(),
+          b.getNorth(),
+        ].join(",");
+
+        const res = await fetch(`/api/parcels?bbox=${bbox}`);
+
+        if (!res.ok) {
+          return;
+        }
+
+        parcelsLayer.clearLayers();
+        parcelsLayer.addData(await res.json());
+      }
+
+      map.on("moveend", () => {
+        clearTimeout(timer);
+        timer = setTimeout(loadParcels, 250);
+      });
+
+      loadParcels();
     </script>
   </body>
 </html>
