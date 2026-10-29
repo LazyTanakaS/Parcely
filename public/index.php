@@ -11,24 +11,6 @@ function sendJson(array $data, int $status = 200): void
     echo json_encode($data);
 }
 
-function fetchParcelGml(): string
-{
-    $url =
-        "https://services.cuzk.gov.cz/wfs/inspire-cp-wfs.asp?" .
-        http_build_query([
-            "service" => "WFS",
-            "version" => "2.0.0",
-            "request" => "GetFeature",
-            "typeNames" => "cp:CadastralParcel",
-            "srsName" => "urn:ogc:def:crs:EPSG::4326",
-            "bbox" => "50.436,15.350,50.438,15.353,urn:ogc:def:crs:EPSG::4326",
-        ]);
-
-    $gml = file_get_contents($url);
-
-    return $gml;
-}
-
 function parseParcels(string $gml): array
 {
     $xml = simplexml_load_string($gml);
@@ -86,11 +68,64 @@ function parcelRings(SimpleXMLElement $parcel): array
     return $rings;
 }
 
+function parseBbox(?string $raw): ?array
+{
+    if ($raw === null) {
+        return null;
+    }
+
+    $parts = explode(",", $raw);
+
+    if (count($parts) !== 4) {
+        return null;
+    }
+
+    foreach ($parts as $part) {
+        if (!is_numeric($part)) {
+            return null;
+        }
+    }
+
+    [$minLon, $minLat, $maxLon, $maxLat] = array_map("floatval", $parts);
+
+    return [$minLat, $minLon, $maxLat, $maxLon];
+}
+
+function fetchParcelGml(array $bbox): string
+{
+    $url =
+        "https://services.cuzk.gov.cz/wfs/inspire-cp-wfs.asp?" .
+        http_build_query([
+            "service" => "WFS",
+            "version" => "2.0.0",
+            "request" => "GetFeature",
+            "typeNames" => "cp:CadastralParcel",
+            "srsName" => "urn:ogc:def:crs:EPSG::4326",
+            "bbox" => implode(",", $bbox),
+        ]);
+
+    $gml = file_get_contents($url);
+
+    return $gml;
+}
+
+function handleParcels(): void
+{
+    $bbox = parseBbox($_GET["bbox"] ?? null);
+
+    if ($bbox === null) {
+        sendJson(["error" => "Expected bbox=minLon,minLat,maxLon,maxLat"], 400);
+        return;
+    }
+
+    sendJson([
+        "type" => "FeatureCollection",
+        "features" => parseParcels(fetchParcelGml($bbox)),
+    ]);
+}
+
 match ($path) {
     "/" => print "hello",
-    "/api/parcels" => sendJson([
-        "type" => "FeatureCollection",
-        "features" => parseParcels(fetchParcelGml()),
-    ]),
+    "/api/parcels" => handleParcels(),
     default => sendJson(["error" => "Not found"], 404),
 };
