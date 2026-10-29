@@ -28,7 +28,10 @@ function handleParcels(): void
     $bbox = Bbox::fromString($_GET["bbox"] ?? null);
 
     if ($bbox === null) {
-        JsonResponse::send(["error" => "Expected bbox=..."], 400);
+        JsonResponse::send(
+            ["error" => "Expected bbox=minLon,minLat,maxLon,maxLat"],
+            400,
+        );
         return;
     }
 
