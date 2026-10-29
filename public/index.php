@@ -1,7 +1,8 @@
 <?php
 
 declare(strict_types=1);
-const MAX_BBOX_SIZE_DEG = 0.0101;
+const MAX_BBOX_AREA_DEG2 = 0.000101;
+const MAX_BBOX_SIDE_DEG = 0.03;
 $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
 
 function sendJson(array $data, int $status = 200): void
@@ -92,9 +93,13 @@ function parseBbox(?string $raw): ?array
         return null;
     }
 
+    $width = $maxLon - $minLon;
+    $heigh = $maxLat - $minLat;
+
     if (
-        $maxLon - $minLon > MAX_BBOX_SIZE_DEG ||
-        $maxLat - $minLat > MAX_BBOX_SIZE_DEG
+        $width > MAX_BBOX_SIDE_DEG ||
+        $heigh > MAX_BBOX_SIDE_DEG ||
+        $width * $heigh > MAX_BBOX_AREA_DEG2
     ) {
         return null;
     }
