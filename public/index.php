@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 use App\JsonResponse;
-use App\Bbox;
 use App\CuzkClient;
 use App\GmlParser;
+use App\ParcelController;
 
 spl_autoload_register(function (string $class): void {
     $prefix = "App\\";
@@ -23,37 +23,11 @@ spl_autoload_register(function (string $class): void {
 
 $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
 
-function handleParcels(): void
-{
-    $bbox = Bbox::fromString($_GET["bbox"] ?? null);
-
-    if ($bbox === null) {
-        JsonResponse::send(
-            ["error" => "Expected bbox=minLon,minLat,maxLon,maxLat"],
-            400,
-        );
-        return;
-    }
-
-    $client = new CuzkClient();
-    $parser = new GmlParser();
-
-    try {
-        $gml = $client->fetchParcelGml($bbox);
-        $features = $parser->parse($gml);
-    } catch (RuntimeException $e) {
-        JsonResponse::send(["error" => "Cuzk did not return valid data"], 502);
-        return;
-    }
-
-    JsonResponse::send([
-        "type" => "FeatureCollection",
-        "features" => $features,
-    ]);
-}
-
 match ($path) {
     "/" => print "hello",
-    "/api/parcels" => handleParcels(),
+    "/api/parcels" => new ParcelController(
+        new CuzkClient(),
+        new GmlParser(),
+    )->index(),
     default => JsonResponse::send(["error" => "Not found"], 404),
 };
