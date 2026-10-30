@@ -77,6 +77,31 @@ curl "http://localhost:8000/api/parcels?bbox=15.350,50.436,15.353,50.438"
   `public/app/`, takže ke spuštění stačí PHP. Starší verze mapy bez sestavení
   (`public/map.html`) zůstala jako záloha.
 
+## Co mě překvapilo
+
+- ČÚZK v bboxu čeká nejdřív šířku a pak délku (lat,lon), kdežto GeoJSON a
+  Leaflet používají lon,lat. Když jsem je poslal v opačném pořadí, služba
+  nevrátila chybu, ale nula parcel. Prohození proto dělám na jednom místě,
+  v `Bbox::toCzukParam()`.
+- WFS mlčky ignoruje neznámé parametry. Kvůli překlepu v `srsName` mi přišla
+  data v S-JTSK místo EPSG:4326. Nepoznal jsem to podle chyby, ale podle
+  velikosti odpovědi a prvních souřadnic. Od té doby kontroluji i obsah
+  odpovědi, ne jen její velikost.
+- GeoJSON z ČÚZK neobsahuje atributy parcel, jen geometrii. Proto čtu GML
+  a GeoJSON skládám v PHP sám.
+- Parcely mají díry. V XML bylo víc seznamů souřadnic než parcel (165 pro
+  159 parcel), protože některé parcely mají vnitřní hranice (`gml:interior`).
+  Polygon proto skládám z vnějšího a z vnitřních kruhů.
+- Čekal jsem, že bude zdržovat zpracování XML, ale zdržuje ČÚZK. Při měření
+  trvalo stažení 0,36 až 2,14 s a zpracování v PHP jen 0,04 až 0,08 s. Proto
+  jsem přidal cache, ne optimalizaci parseru.
+- Limit na délku strany oblasti nebyl dobrý nápad. Na monitoru Full HD byla
+  viditelná oblast při přiblížení 18 asi o 0,0002 ° širší než můj limit a API
+  vrátilo 400, i když byla podle plochy asi třikrát menší než povolený čtverec.
+  Limit jsem proto předělal na plochu.
+- Vestavěný server PHP vrací při fatal erroru status 200 a text chyby v HTML.
+  Při testování proto kontroluji i `Content-Type`, ne jen status.
+
 ## Výkon
 
 Měřil jsem odezvu endpointu `/api/parcels` pro různě velké oblasti v centru Jičína (3 opakování, `curl -w "%{time_total}"`):
