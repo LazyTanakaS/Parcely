@@ -60,11 +60,7 @@ curl "http://localhost:8000/api/parcels?bbox=15.350,50.436,15.353,50.438"
 
 ## Rozhodnutí a proč
 
-(по пункту на решение: live WFS, GML в 4326, PHP как прослойка, порядок осей, лимит bbox, зум 18, дебаунс и отмена запросов, чистый PHP без фреймворка, React)
-
 ## Výkon
-
-(таблица замеров, как ты мерил, что показало: время уходит на ЧУЗК, а не на PHP)
 
 ## Pokrytí území
 
@@ -74,23 +70,19 @@ posouváním mapy při přiblížení 18 a více; vždy se načítá jen viditel
 
 Ověřil jsem tato katastrální území:
 
-| k. ú. | kód |
-| --- | --- |
-| Jičín | 659541 |
-| Nová Paka | 705128 |
+| k. ú.          | kód    |
+| -------------- | ------ |
+| Jičín          | 659541 |
+| Nová Paka      | 705128 |
 | Lázně Bělohrad | 679330 |
-| Sobotka | 752096 |
-| Libáň | 681679 |
+| Sobotka        | 752096 |
+| Libáň          | 681679 |
 
 Při menším přiblížení se parcely nezobrazují (viz Rozhodnutí a Výkon).
 
 ## Omezení a co bych řešil jinak
 
-(коротко, остальное в zápisník)
-
 ## Vývoj frontendu
-
-(npm install, npm run dev, npm run build, куда кладётся сборка)
 
 ## Strávený čas
 
