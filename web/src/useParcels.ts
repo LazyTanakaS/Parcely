@@ -8,7 +8,11 @@ export function useParcels(bounds: LatLngBounds | null) {
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
-    if (bounds === null) {
+    if (
+      bounds === null ||
+      bounds.getEast() === bounds.getWest() ||
+      bounds.getNorth() === bounds.getSouth()
+    ) {
       return;
     }
 
