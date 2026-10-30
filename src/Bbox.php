@@ -63,4 +63,14 @@ final class Bbox
             $this->maxLon,
         ]);
     }
+
+    public function snapped(float $step): self
+    {
+        return new self(
+            round(floor($this->minLon / $step) * $step, 6),
+            round(floor($this->minLat / $step) * $step, 6),
+            round(ceil($this->maxLon / $step) * $step, 6),
+            round(ceil($this->maxLat / $step) * $step, 6),
+        );
+    }
 }
