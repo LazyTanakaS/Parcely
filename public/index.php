@@ -26,7 +26,7 @@ $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
 match ($path) {
     "/" => header("Location: /app/"),
     "/api/parcels" => (new ParcelController(
-        new CuzkClient(),
+        new CuzkClient(__DIR__ . "/../cache"),
         new GmlParser(),
     ))->index(),
     default => JsonResponse::send(["error" => "Not found"], 404),
