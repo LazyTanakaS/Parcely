@@ -57,6 +57,7 @@ Endpoint `GET /api/parcels?bbox=minLon,minLat,maxLon,maxLat` vrací při úspěc
   každá strana nejvýše `0,03 °`)
 - `502`: služba ČÚZK není dostupná a data nejsou v cache, nebo vrátila neplatná data
 - `404`: neznámá adresa
+
   Příklad požadavku:
 
 ```sh
@@ -82,7 +83,7 @@ curl "http://localhost:8000/api/parcels?bbox=15.350,50.436,15.353,50.438"
 - ČÚZK v bboxu čeká nejdřív šířku a pak délku (lat,lon), kdežto GeoJSON a
   Leaflet používají lon,lat. Když jsem je poslal v opačném pořadí, služba
   nevrátila chybu, ale nula parcel. Prohození proto dělám na jednom místě,
-  v `Bbox::toCzukParam()`.
+  v `Bbox::toCuzkParam()`.
 - WFS mlčky ignoruje neznámé parametry. Kvůli překlepu v `srsName` mi přišla
   data v S-JTSK místo EPSG:4326. Nepoznal jsem to podle chyby, ale podle
   velikosti odpovědi a prvních souřadnic. Od té doby kontroluji i obsah
