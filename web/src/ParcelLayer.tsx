@@ -1,11 +1,13 @@
 import { useState } from "react";
-import type { LatLngBounds, Layer } from "leaflet";
+import type { LatLngBounds, Layer, Path } from "leaflet";
 import type { Feature, Polygon } from "geojson";
 import type { ParcelProperties } from "./types";
 import { GeoJSON, useMap, useMapEvents } from "react-leaflet";
 import { useParcels } from "./useParcels";
 
 const MIN_ZOOM = 18;
+const BASE_STYLE = { weight: 1, fillOpacity: 0.2 };
+const HOVER_STYLE = { weight: 2, fillOpacity: 0.5 };
 
 function bindParcelPopup(
   feature: Feature<Polygon, ParcelProperties>,
@@ -15,9 +17,14 @@ function bindParcelPopup(
 
   layer.bindPopup(
     `<strong>parc. ${label}</strong><br>` +
-      `Výměra: ${area} m²<br>` +
+      `Výměra: ${area.toLocaleString("cs-CZ")} m²<br>` +
       `Ref.: ${reference}`,
   );
+
+  layer.on({
+    mouseover: () => (layer as Path).setStyle(HOVER_STYLE),
+    mouseout: () => (layer as Path).setStyle(BASE_STYLE),
+  });
 }
 
 export default function ParcelLayer() {
@@ -48,7 +55,7 @@ export default function ParcelLayer() {
         <GeoJSON
           key={version}
           data={parcels}
-          style={{ weight: 1, fillOpacity: 0.2 }}
+          style={BASE_STYLE}
           onEachFeature={bindParcelPopup}
         />
       )}
