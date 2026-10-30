@@ -32,18 +32,26 @@ export default function ParcelLayer() {
     moveend: () => setBounds(currentBounds()),
   });
 
-  const { parcels, version } = useParcels(bounds);
+  const { parcels, version, error } = useParcels(bounds);
 
-  if (parcels === null) {
-    return null;
-  }
+  const message =
+    bounds === null
+      ? "Přibližte mapu pro zobrazení parcel"
+      : error !== null
+        ? "Parcely se nepodařilo načíst"
+        : null;
 
   return (
-    <GeoJSON
-      key={version}
-      data={parcels}
-      style={{ weight: 1, fillOpacity: 0.2 }}
-      onEachFeature={bindParcelPopup}
-    />
+    <>
+      {message !== null && <div className="map-hint">{message}</div>}
+      {parcels !== null && (
+        <GeoJSON
+          key={version}
+          data={parcels}
+          style={{ weight: 1, fillOpacity: 0.2 }}
+          onEachFeature={bindParcelPopup}
+        />
+      )}
+    </>
   );
 }
