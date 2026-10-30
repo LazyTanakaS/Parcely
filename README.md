@@ -60,7 +60,36 @@ curl "http://localhost:8000/api/parcels?bbox=15.350,50.436,15.353,50.438"
 
 ## Rozhodnutí a proč
 
+- **Žíva data z WFS ČÚZK**, ne předem stažená: aplikace nepotřebuje databází a data jsou aktualní. Nevýhodou je zavislost na cizí službě, proto endpoint při selhání vrací `502`.
+- **GML v EPSG:4326**: GeoJSON z ČÚZK neobsahuje atributy parcel (čislo, výměru), GML ano. EPSG:4326 odpadá převod ze S-JTSK.
+- **PHP jako vrstva mezi ČÚZK a prohližečem**: zpracuje GML, prohodí osy (ČÚZK používá lat, lon GeoJSON a Leaflet lon, lat), složí GeoJSON a vnitřní hranice parcel (díry). Prohlížeč tak dostává malou odpoveď.
+- **Vlatsní API přijimá bbox jako `minLon,minLat,maxLon,maxLat`** (běžné pro mapy); prohození os pro ČÚZK dělá až `Bbox::toCzukParam()`.
+- **Limit oblasti podle plochy** (nejvýše 0.000101 °², strana nejvýše 0,03 °): zátěž závisi na počtu parcel, ne na délce strany. Hodnotu jsem určil měřením (viz Výkon).
+- **Parcely se načítají od přiblížení 18**, jen pro viditelnou oblast, s prodlevou 250 ms po zastavení mapy a se zrušením zastaralých požadavků (`AbortController`), aby mapa zůstala plynulá.
+- **Čisté PHP bez frameworku**: Frameworky jsem nepoužíval jelikož s níma ani s PHP zatim moc zkušeností nemam, proto radší jsem ponechal čisty PHP.
+- **Frontend v Reactu (Vite, TypeScript, Leaflet)**. Sestavená aplikace je v
+  `public/app/`, takže ke spuštění stačí PHP. Starší verze mapy bez sestavení
+  (`public/map.html`) zůstala jako záloha.
+
 ## Výkon
+
+Měříl jsem odezvu endpointu `/api/parcels` pro různě velké oblasti v centru Jíčína (3 opakovaní, `curl -w "%{time_total}"`):
+
+| Oblast                              | Čas            | Velikost odpovědi |
+| ----------------------------------- | -------------- | ----------------- |
+| 0,005 ° × 0,005 °                   | 0,23 až 0,33 s | 155 KB            |
+| 0,010 ° × 0,010 ° (asi 1800 parcel) | 1,26 až 1,72 s | 772 KB            |
+| 0,015 ° × 0,015 °                   | 1,64 až 2,01 s | 1,99 MB           |
+
+Čas jsem rozdělil na stažení z ČÚZK a zpracovaní v PHP (jedno měření):
+stažení trvalo 0,36 až 2,14 s, zpracovaní v PHP jen 0,04 až 0,08 s. Hlavní brzdou je tedy služba ČÚZK, ne PHP. Proto jsem omezil velikost oblasti a odpoveď se nenačitá při menším přibližení.
+
+GeoJSON, který posílám prohližečí, je asi 3,8 krát menší než GML z ČÚZK
+(97 KB na proti 369 KB pro stejnou oblast s 159 parcelami).
+
+Velká oblast (kolem 0,07 ° × 0,07 °) shodila PHP kvůli limitu paměti 128 MB, protože SimpleXML načítá celé XML najednou. Proto má `Bbox` limit na plochu.
+
+Čisla jsou orientační: jedno měření v centru města, kde jsou parcely nejhustší, a odezva ČÚZK kolisá.
 
 ## Pokrytí území
 
@@ -82,7 +111,21 @@ Při menším přiblížení se parcely nezobrazují (viz Rozhodnutí a Výkon).
 
 ## Omezení a co bych řešil jinak
 
+- Nemám cache opovědí ČÚZK, každy pohyb mapy znamená novy dotaz. Cache v `CuzkClient` by zrychlila hlavně opakovanné oblasti.
+- Při menším přibližení než 18 se parcely nezobrazují. Lepši by bylo ukázat alespoň hranice katastrálních území.
+- SimpleXML načitá celé XML do paměti; pro velké oblasti bych použil proudové čtení (`XMLReader`)
+- Frontend nekontroluje tvar odpovědi API za běhu (jen TypeScript typy).
+- Chybí automatické testy (například pro `Bbox` a `GmlParser`).
+
 ## Vývoj frontendu
+
+Zdrojový kód je ve složce `web/` (React, Vite, TypeScript). Hotová aplikace je
+už sestavená v `public/app/`, takže pro samotné spuštění Node.js není potřeba.
+
+    cd web
+    npm install
+    npm run dev       # http://localhost:5173/app/, /api se přeposílá na PHP (port 8000)
+    npm run build     # sestaví aplikaci do ../public/app
 
 ## Strávený čas
 
