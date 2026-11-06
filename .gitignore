@@ -5,6 +5,3 @@
 /vendor/
 /cache/
 *.log
-.prettierrc.json
-package-lock.json
-package.json

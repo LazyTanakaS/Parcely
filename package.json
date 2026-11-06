@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "format:php": "prettier --write \"**/*.php\"",
+    "format:php:check": "prettier --check \"**/*.php\""
+  },
+  "devDependencies": {
+    "@prettier/plugin-php": "^0.24.0",
+    "prettier": "^3.6.2"
+  }
+}
