@@ -72,7 +72,7 @@ curl "http://localhost:8000/api/parcels?bbox=15.350,50.436,15.353,50.438"
 - Vlastní API přijímá bbox jako `minLon,minLat,maxLon,maxLat` (běžné pro mapy); prohození os pro ČÚZK dělá až `Bbox::toCuzkParam()`.
 - Limit oblasti podle plochy (nejvýše 0,000101 °², strana nejvýše 0,03 °): zátěž závisí na počtu parcel, ne na délce strany. Hodnotu jsem určil měřením (viz Výkon).
 - Parcely se načítají od přiblížení 18, jen pro viditelnou oblast, s prodlevou 250 ms po zastavení mapy a se zrušením zastaralých požadavků (`AbortController`), aby mapa zůstala plynulá.
-- Čisté PHP bez frameworku: zadání čisté PHP preferuje, endpointy jsou jen dva a s PHP i s frameworky mám zatím málo zkušeností, takže jsem chtěl rozumět každé části kódu.
+- Čisté PHP bez frameworku: endpointy jsou jen dva a s PHP i s frameworky mám zatím málo zkušeností, takže jsem chtěl rozumět každé části kódu.
 - Cache odpovědí ČÚZK v souborech (`cache/`, platnost 1 den): ČÚZK je nejpomalejší část. Oblast před dotazem zaokrouhluji na mřížku 0,002 °, aby i mírně posunutý pohled mapy použil stejný soubor. Když ČÚZK neodpoví (časový limit 10 s), vrátím starší data z cache místo chyby; `502` přijde jen tehdy, když v cache nic není.
 - Frontend v Reactu (Vite, TypeScript, Leaflet). Sestavená aplikace je v
   `public/app/`, takže ke spuštění stačí PHP. Starší verze mapy bez sestavení
@@ -171,11 +171,3 @@ Zdrojový kód je ve složce `web/` (React, Vite, TypeScript).
     npm install
     npm run dev       # http://localhost:5173/app/, /api se přeposílá na PHP (port 8000)
     npm run build     # sestaví aplikaci do ../public/app
-
-## Strávený čas
-
-Úkol mi zabral přibližně 12 hodin čisté práce, rozložených do tří dní
-(28. až 30. 10.), protože jsem na něm pracoval po práci a ve volném čase.
-Zhruba třetinu času zabralo učení PHP od základů (PHP jsem předtím neznal)
-a zjišťování, jak se chová WFS služba ČÚZK; zbytek byl backend, frontend a
-měření výkonu.
